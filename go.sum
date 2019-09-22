@@ -37,12 +37,16 @@ github.com/synerex/synerex_api v0.0.1 h1:mexiZKdWHKT8ia16n0Xp21kJ2w8tpZvRBYHeO43
 github.com/synerex/synerex_api v0.0.1/go.mod h1:F6CqUVgHclr+VtaQ+BAaFHsrYBKm7P/f1nYFkjz+M2Y=
 github.com/synerex/synerex_nodeapi v0.1.1 h1:jxo3hvZ+qvkJcN6gkgS4VHMoxHgr/MERIANmCl1M3Q0=
 github.com/synerex/synerex_nodeapi v0.1.1/go.mod h1:UM6Xrtb2oMti3AQ7uNR3bEcS2FHiQqsK2nKb97vZuYs=
+github.com/synerex/synerex_nodeapi v0.3.1 h1:8L9QoEx/JR80fYc/3IUewlc1z0gAJO9kp/8phiiMYMw=
+github.com/synerex/synerex_nodeapi v0.3.1/go.mod h1:UM6Xrtb2oMti3AQ7uNR3bEcS2FHiQqsK2nKb97vZuYs=
 github.com/synerex/synerex_proto v0.1.1 h1:rqo27uW4DKkmstq6bl21F4RaSYYvDpJICDM/i2a4WTQ=
 github.com/synerex/synerex_proto v0.1.1/go.mod h1:YU29N7auJhYQWPPsPqbLlNTZazCuDuYkDJgw2xFsYck=
 github.com/synerex/synerex_sxutil v0.1.1 h1:TNYFbuH3Fb0pEpo8l0oCaqp/8Kx8aZproMz+X/GjAtc=
 github.com/synerex/synerex_sxutil v0.1.1/go.mod h1:EEai1zERox1DpKLtKl1mUSqiK3zeZzrWaydf7VgXEaQ=
 github.com/synerex/synerex_sxutil v0.1.3 h1:ozTrFpbfmOcoiCs+pPPpc+RMT8ZF/WZBUKidwdeQrJ4=
 github.com/synerex/synerex_sxutil v0.1.3/go.mod h1:EEai1zERox1DpKLtKl1mUSqiK3zeZzrWaydf7VgXEaQ=
+github.com/synerex/synerex_sxutil v0.2.1 h1:Ek/HxKxk4lzqkLsbgMErHVn+u8M8nAsGXZXNjr254Ec=
+github.com/synerex/synerex_sxutil v0.2.1/go.mod h1:789Q6u3cPE4SKtl8JtJDkAvaxWNOMkOp0TbuuiV+tsE=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/lint v0.0.0-20190313153728-d0100b6bd8b3/go.mod h1:6SW0HCj/g11FgYtHlgUYUwCkIfeOF89ocIRzGO/8vkc=
 golang.org/x/net v0.0.0-20190311183353-d8887717615a h1:oWX7TPOiFAMXLq8o0ikBYfCJVlRHBcsciT5bXOrH628=

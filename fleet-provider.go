@@ -20,10 +20,8 @@ import (
 
 
 var (
-	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	fmsrv      = flag.String("fmsrv", "wss://fm.synergic.mobi:8443/", "FleetManager Server")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
-	price      = flag.Int("price", 100, "Taxi price")
 	idlist     []uint64
 	spMap      map[uint64]*sxutil.SupplyOpts
 	mu         sync.Mutex
@@ -71,7 +69,7 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 		sp := &sxutil.SupplyOpts{
 			Target: dm.GetId(),
 			Name:   "RideShare by Taxi",
-			JSON:   `{"Price":` + strconv.Itoa(*price) + `,"Distance": 5200, "Arrival": 300, "Destination": 500, "Position":{"Latitude":36.6, "Longitude":135}}`,
+			JSON:   `{"Price":` + strconv.Itoa(1000) + `,"Distance": 5200, "Arrival": 300, "Destination": 500, "Position":{"Latitude":36.6, "Longitude":135}}`,
 		} // set TargetID as Demand.Id (User will check by them)
 
 		mu.Lock()
@@ -149,8 +147,8 @@ func publishSupplyFromFleetManager(client *sxutil.SMServiceClient, ch chan error
 	}
 	//	defer sioClient.Close()
 
-	sioClient.On(gosocketio.OnConnection, func(c *gosocketio.Channel,param interface{}) {
-		log.Printf("Fleet-Provider socket.io connected %v",c)
+	sioClient.On(gosocketio.OnConnection, func(c *gosocketio.Channel, param interface{}) {
+		log.Printf("Fleet-Provider socket.io connected %v", c)
 	})
 	sioClient.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel,param interface{}) {
 		log.Printf("Fleet-Provider socket.io disconnected %v",c)
@@ -182,16 +180,21 @@ func runPublishSupplyInfinite(sclient *sxutil.SMServiceClient){
 
 func main() {
 	flag.Parse()
-	sxutil.RegisterNodeName(*nodesrv, "FleetProvider", false)
-
 	go sxutil.HandleSigInt()
 	sxutil.RegisterDeferFunction(sxutil.UnRegisterNode)
+
+	channelTypes := []uint32{pbase.RIDE_SHARE}
+	srv, err := sxutil.RegisterNode(*nodesrv, "FleetProvider", channelTypes, nil)
+	if err != nil {
+		log.Fatal("Can't register node...")
+	}
+	log.Printf("Connecting Server [%s]\n",srv)
 
 	var opts []grpc.DialOption
 	wg := sync.WaitGroup{} // for syncing other goroutines
 
 	opts = append(opts, grpc.WithInsecure())
-	conn, err := grpc.Dial(*serverAddr, opts...)
+	conn, err := grpc.Dial(srv, opts...)
 	if err != nil {
 		log.Fatalf("fail to dial: %v", err)
 	}
@@ -203,7 +206,17 @@ func main() {
 	wg.Add(1)
 
 	// We add Fleet Provider to "RIDE_SHARE" Supply
-	go runPublishSupplyInfinite(sclient)
+
+	cont := pb.Content{Entity: []byte{0}}
+
+	smo := sxutil.SupplyOpts{
+		Name:  "Fleet Supply",
+		Cdata: &cont,
+	}
+	//			fmt.Printf("Res: %v",smo)
+	sclient.NotifySupply(&smo)
+
+//	go runPublishSupplyInfinite(sclient)
 	//	go subscribeDemand(sclient)
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!
