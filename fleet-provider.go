@@ -207,16 +207,14 @@ func main() {
 
 	// We add Fleet Provider to "RIDE_SHARE" Supply
 
-	cont := pb.Content{Entity: []byte{0}}
-
+/*	cont := pb.Content{Entity: []byte{0}}
 	smo := sxutil.SupplyOpts{
 		Name:  "Fleet Supply",
 		Cdata: &cont,
 	}
-	//			fmt.Printf("Res: %v",smo)
 	sclient.NotifySupply(&smo)
-
-//	go runPublishSupplyInfinite(sclient)
+*/
+	go runPublishSupplyInfinite(sclient)
 	//	go subscribeDemand(sclient)
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!
