@@ -123,7 +123,7 @@ func handleMessage(client *sxutil.SMServiceClient, param interface{}){
 		}
 
 		out,err := proto.Marshal(&fleet)
-		if err != nil {
+		if err == nil {
 			cont := pb.Content{Entity: out}
 			// Register supply
 			smo := sxutil.SupplyOpts{
@@ -133,7 +133,7 @@ func handleMessage(client *sxutil.SMServiceClient, param interface{}){
 			//			fmt.Printf("Res: %v",smo)
 			client.NotifySupply(&smo)
 		}else{
-			log.Printf("PB Marshal Error!")
+			log.Printf("PB Marshal Error!",err)
 		}
 	}
 }
@@ -150,10 +150,10 @@ func publishSupplyFromFleetManager(client *sxutil.SMServiceClient, ch chan error
 	//	defer sioClient.Close()
 
 	sioClient.On(gosocketio.OnConnection, func(c *gosocketio.Channel,param interface{}) {
-		fmt.Println("Fleet-Provider socket.io connected ",c)
+		log.Printf("Fleet-Provider socket.io connected %v",c)
 	})
 	sioClient.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel,param interface{}) {
-		fmt.Println("Fleet-Provider socket.io disconnected ",c)
+		log.Printf("Fleet-Provider socket.io disconnected %v",c)
 		ch <- fmt.Errorf("Disconnected!\n")
 		// should connect again..
 	})
