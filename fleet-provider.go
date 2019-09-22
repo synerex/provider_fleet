@@ -25,6 +25,7 @@ var (
 	idlist     []uint64
 	spMap      map[uint64]*sxutil.SupplyOpts
 	mu         sync.Mutex
+	sxServerAddress string
 )
 
 type Channel struct {
@@ -129,7 +130,16 @@ func handleMessage(client *sxutil.SMServiceClient, param interface{}){
 				Cdata: &cont,
 			}
 			//			fmt.Printf("Res: %v",smo)
-			client.NotifySupply(&smo)
+			_, nerr := client.NotifySupply(&smo)
+			if nerr != nil { // connection failuer with current client
+				// we need to ask to nodeidserv?
+				// or just reconnect.
+				newClient := grpcConnectServer(sxServerAddress)
+				if newClient != nil {
+					log.Printf("Reconnect Server %s\n", sxServerAddress)
+					client.Client = newClient
+				}
+			}
 		}else{
 			log.Printf("PB Marshal Error!",err)
 		}
@@ -178,28 +188,33 @@ func runPublishSupplyInfinite(sclient *sxutil.SMServiceClient){
 	}
 }
 
+func grpcConnectServer(serverAddress string) pb.SynerexClient{
+	var opts []grpc.DialOption
+	opts = append(opts, grpc.WithInsecure())
+	conn, err := grpc.Dial(serverAddress, opts...)
+	if err != nil {
+		log.Printf("fail to connect server %s: %v",serverAddress, err)
+		return nil
+	}
+	return pb.NewSynerexClient(conn)
+}
+
 func main() {
 	flag.Parse()
 	go sxutil.HandleSigInt()
 	sxutil.RegisterDeferFunction(sxutil.UnRegisterNode)
 
 	channelTypes := []uint32{pbase.RIDE_SHARE}
+	// obtain synerex server address from nodeserv
 	srv, err := sxutil.RegisterNode(*nodesrv, "FleetProvider", channelTypes, nil)
 	if err != nil {
 		log.Fatal("Can't register node...")
 	}
 	log.Printf("Connecting Server [%s]\n",srv)
 
-	var opts []grpc.DialOption
 	wg := sync.WaitGroup{} // for syncing other goroutines
-
-	opts = append(opts, grpc.WithInsecure())
-	conn, err := grpc.Dial(srv, opts...)
-	if err != nil {
-		log.Fatalf("fail to dial: %v", err)
-	}
-
-	client := pb.NewSynerexClient(conn)
+	sxServerAddress = srv
+	client := grpcConnectServer(srv)
 	argJson := fmt.Sprintf("{Client:Fleet}")
 	sclient := sxutil.NewSMServiceClient(client, pbase.RIDE_SHARE,argJson)
 
