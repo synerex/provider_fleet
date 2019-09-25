@@ -54,7 +54,7 @@ func init() {
 }
 
 // callback for each Demand
-func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
+func demandCallback(clt *sxutil.SXServiceClient, dm *pb.Demand) {
 	// check if demand is match with my supply.
 	log.Println("Got ride share demand callback")
 
@@ -81,7 +81,7 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	}
 }
 
-func subscribeDemand(client *sxutil.SMServiceClient) {
+func subscribeDemand(client *sxutil.SXServiceClient) {
 	// goroutine!
 	ctx := context.Background() //
 	client.SubscribeDemand(ctx, demandCallback)
@@ -102,7 +102,7 @@ func oldproposeSupply(client pb.SynerexClient, targetNum uint64) {
 
 }
 
-func handleMessage(client *sxutil.SMServiceClient, param interface{}){
+func handleMessage(client *sxutil.SXServiceClient, param interface{}){
 
 	var bmap map[string]interface{}
 	bmap = param.(map[string]interface{})
@@ -147,7 +147,7 @@ func handleMessage(client *sxutil.SMServiceClient, param interface{}){
 }
 
 
-func publishSupplyFromFleetManager(client *sxutil.SMServiceClient, ch chan error) {
+func publishSupplyFromFleetManager(client *sxutil.SXServiceClient, ch chan error) {
 	// Connect by SocketIO
 	fmt.Printf("Dial to  [%s]\n",*fmsrv)
 	sioClient, err := gosocketio.Dial("wss://fm.synergic.mobi:8443/socket.io/?EIO=3&transport=websocket", transport.DefaultWebsocketTransport())
@@ -175,7 +175,7 @@ func publishSupplyFromFleetManager(client *sxutil.SMServiceClient, ch chan error
 
 }
 
-func runPublishSupplyInfinite(sclient *sxutil.SMServiceClient){
+func runPublishSupplyInfinite(sclient *sxutil.SXServiceClient){
 	ch := make(chan error)
 	for {
 		publishSupplyFromFleetManager(sclient, ch)
@@ -216,7 +216,7 @@ func main() {
 	sxServerAddress = srv
 	client := grpcConnectServer(srv)
 	argJson := fmt.Sprintf("{Client:Fleet}")
-	sclient := sxutil.NewSMServiceClient(client, pbase.RIDE_SHARE,argJson)
+	sclient := sxutil.NewSXServiceClient(client, pbase.RIDE_SHARE,argJson)
 
 	wg.Add(1)
 
