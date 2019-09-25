@@ -11,7 +11,6 @@ import (
 	pb "github.com/synerex/synerex_api"
 	pbase "github.com/synerex/synerex_proto"
 	sxutil "github.com/synerex/synerex_sxutil"
-	"google.golang.org/grpc"
 	"log"
 	"strconv"
 	"sync"
@@ -134,7 +133,7 @@ func handleMessage(client *sxutil.SXServiceClient, param interface{}){
 			if nerr != nil { // connection failuer with current client
 				// we need to ask to nodeidserv?
 				// or just reconnect.
-				newClient := grpcConnectServer(sxServerAddress)
+				newClient := sxutil.GrpcConnectServer(sxServerAddress)
 				if newClient != nil {
 					log.Printf("Reconnect Server %s\n", sxServerAddress)
 					client.Client = newClient
@@ -188,16 +187,6 @@ func runPublishSupplyInfinite(sclient *sxutil.SXServiceClient){
 	}
 }
 
-func grpcConnectServer(serverAddress string) pb.SynerexClient{
-	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithInsecure())
-	conn, err := grpc.Dial(serverAddress, opts...)
-	if err != nil {
-		log.Printf("fail to connect server %s: %v",serverAddress, err)
-		return nil
-	}
-	return pb.NewSynerexClient(conn)
-}
 
 func main() {
 	flag.Parse()
@@ -214,7 +203,7 @@ func main() {
 
 	wg := sync.WaitGroup{} // for syncing other goroutines
 	sxServerAddress = srv
-	client := grpcConnectServer(srv)
+	client := sxutil.GrpcConnectServer(srv)
 	argJson := fmt.Sprintf("{Client:Fleet}")
 	sclient := sxutil.NewSXServiceClient(client, pbase.RIDE_SHARE,argJson)
 
