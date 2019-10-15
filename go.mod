@@ -10,6 +10,7 @@ require (
 	github.com/stretchr/testify v1.4.0 // indirect
 	github.com/synerex/proto_fleet v0.0.1
 	github.com/synerex/synerex_api v0.2.1
+	github.com/synerex/synerex_nodeapi v0.4.3
 	github.com/synerex/synerex_proto v0.1.1
 	github.com/synerex/synerex_sxutil v0.3.5
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
