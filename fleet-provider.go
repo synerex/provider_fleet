@@ -4,26 +4,28 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
+	"strconv"
+	"sync"
+	"time"
+
 	"github.com/golang/protobuf/proto"
 	gosocketio "github.com/mtfelian/golang-socketio"
 	"github.com/mtfelian/golang-socketio/transport"
 	fleet "github.com/synerex/proto_fleet"
 	pb "github.com/synerex/synerex_api"
+	nodeapi "github.com/synerex/synerex_nodeapi"
 	pbase "github.com/synerex/synerex_proto"
 	sxutil "github.com/synerex/synerex_sxutil"
-	"log"
-	"strconv"
-	"sync"
-	"time"
 )
 
-
 var (
-	fmsrv      = flag.String("fmsrv", "wss://fm.synergic.mobi:8443/", "FleetManager Server")
-	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
-	idlist     []uint64
-	spMap      map[uint64]*sxutil.SupplyOpts
-	mu         sync.Mutex
+	fmsrv           = flag.String("fmsrv", "wss://fm.synergic.mobi:8443/", "FleetManager Server")
+	hostName        = flag.String("host", "", "fleet provider host name")
+	nodesrv         = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
+	idlist          []uint64
+	spMap           map[uint64]*sxutil.SupplyOpts
+	mu              sync.Mutex
 	sxServerAddress string
 )
 
@@ -101,7 +103,7 @@ func oldproposeSupply(client pb.SynerexClient, targetNum uint64) {
 
 }
 
-func handleMessage(client *sxutil.SXServiceClient, param interface{}){
+func handleMessage(client *sxutil.SXServiceClient, param interface{}) {
 
 	var bmap map[string]interface{}
 	bmap = param.(map[string]interface{})
@@ -120,7 +122,7 @@ func handleMessage(client *sxutil.SXServiceClient, param interface{}){
 			},
 		}
 
-		out,err := proto.Marshal(&fleet)
+		out, err := proto.Marshal(&fleet)
 		if err == nil {
 			cont := pb.Content{Entity: out}
 			// Register supply
@@ -139,16 +141,15 @@ func handleMessage(client *sxutil.SXServiceClient, param interface{}){
 					client.Client = newClient
 				}
 			}
-		}else{
-			log.Printf("PB Marshal Error!",err)
+		} else {
+			log.Printf("PB Marshal Error!", err)
 		}
 	}
 }
 
-
 func publishSupplyFromFleetManager(client *sxutil.SXServiceClient, ch chan error) {
 	// Connect by SocketIO
-	fmt.Printf("Dial to  [%s]\n",*fmsrv)
+	fmt.Printf("Dial to  [%s]\n", *fmsrv)
 	sioClient, err := gosocketio.Dial("wss://fm.synergic.mobi:8443/socket.io/?EIO=3&transport=websocket", transport.DefaultWebsocketTransport())
 	if err != nil {
 		log.Printf("SocketIO Dial error: %s", err)
@@ -159,13 +160,13 @@ func publishSupplyFromFleetManager(client *sxutil.SXServiceClient, ch chan error
 	sioClient.On(gosocketio.OnConnection, func(c *gosocketio.Channel, param interface{}) {
 		log.Printf("Fleet-Provider socket.io connected %v", c)
 	})
-	sioClient.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel,param interface{}) {
-		log.Printf("Fleet-Provider socket.io disconnected %v",c)
+	sioClient.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel, param interface{}) {
+		log.Printf("Fleet-Provider socket.io disconnected %v", c)
 		ch <- fmt.Errorf("Disconnected!\n")
 		// should connect again..
 	})
 
-	sioClient.On("vehicle_status", func(c *gosocketio.Channel, param interface{}){
+	sioClient.On("vehicle_status", func(c *gosocketio.Channel, param interface{}) {
 		//		fmt.Printf("Got %v",param)
 		handleMessage(client, param)
 		//		got := param.(string)
@@ -174,19 +175,18 @@ func publishSupplyFromFleetManager(client *sxutil.SXServiceClient, ch chan error
 
 }
 
-func runPublishSupplyInfinite(sclient *sxutil.SXServiceClient){
+func runPublishSupplyInfinite(sclient *sxutil.SXServiceClient) {
 	ch := make(chan error)
 	for {
 		publishSupplyFromFleetManager(sclient, ch)
 		// wait for disconnected...
-		res := <- ch
+		res := <-ch
 		if res == nil {
 			break
 		}
-		time.Sleep(3*time.Second)
+		time.Sleep(3 * time.Second)
 	}
 }
-
 
 func main() {
 	flag.Parse()
@@ -194,30 +194,43 @@ func main() {
 	sxutil.RegisterDeferFunction(sxutil.UnRegisterNode)
 
 	channelTypes := []uint32{pbase.RIDE_SHARE}
+	sxo := &sxutil.SxServerOpt{
+		NodeType:   nodeapi.NodeType_PROVIDER,
+		ServerInfo: *hostName,
+		ClusterId:  0,
+		AreaId:     "Default",
+	}
+
 	// obtain synerex server address from nodeserv
-	srv, err := sxutil.RegisterNode(*nodesrv, "FleetProvider", channelTypes, nil)
+	srv, err := sxutil.RegisterNode(
+		*nodesrv,
+		"FleetProvider",
+		channelTypes,
+		sxo,
+	)
+
 	if err != nil {
 		log.Fatal("Can't register node...")
 	}
-	log.Printf("Connecting Server [%s]\n",srv)
+	log.Printf("Connecting Server [%s]\n", srv)
 
 	wg := sync.WaitGroup{} // for syncing other goroutines
 	sxServerAddress = srv
 	client := sxutil.GrpcConnectServer(srv)
 	argJson := fmt.Sprintf("{Client:Fleet}")
-	sclient := sxutil.NewSXServiceClient(client, pbase.RIDE_SHARE,argJson)
+	sclient := sxutil.NewSXServiceClient(client, pbase.RIDE_SHARE, argJson)
 
 	wg.Add(1)
 
 	// We add Fleet Provider to "RIDE_SHARE" Supply
 
-/*	cont := pb.Content{Entity: []byte{0}}
-	smo := sxutil.SupplyOpts{
-		Name:  "Fleet Supply",
-		Cdata: &cont,
-	}
-	sclient.NotifySupply(&smo)
-*/
+	/*	cont := pb.Content{Entity: []byte{0}}
+		smo := sxutil.SupplyOpts{
+			Name:  "Fleet Supply",
+			Cdata: &cont,
+		}
+		sclient.NotifySupply(&smo)
+	*/
 	go runPublishSupplyInfinite(sclient)
 	//	go subscribeDemand(sclient)
 	wg.Wait()
