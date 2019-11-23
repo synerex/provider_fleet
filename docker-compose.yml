@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  fleet_provider:
+    tty: true
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fleet_provider
+    volumes:
+      - .:/go/src/github.com/synerex/provider/fleet
+    ports:
+      - "8443:8443"
+    networks: 
+      - synerex_net
+      - default
+networks:
+  synerex_net:
+    external: true
