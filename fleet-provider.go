@@ -188,11 +188,7 @@ func runPublishSupplyInfinite(sclient *sxutil.SXServiceClient) {
 	}
 }
 
-func main() {
-	flag.Parse()
-	go sxutil.HandleSigInt()
-	sxutil.RegisterDeferFunction(sxutil.UnRegisterNode)
-
+func providerInit() {
 	channelTypes := []uint32{pbase.RIDE_SHARE}
 	sxo := &sxutil.SxServerOpt{
 		NodeType:   nodeapi.NodeType_PROVIDER,
@@ -202,12 +198,12 @@ func main() {
 	}
 
 	// obtain synerex server address from nodeserv
-	srv, err := sxutil.RegisterNode(
+	srv, err := sxutil.RegisterNodeAndProc(
 		*nodesrv,
 		"FleetProvider",
 		channelTypes,
 		sxo,
-	)
+		providerInit)
 
 	if err != nil {
 		log.Fatal("Can't register node...")
@@ -234,6 +230,15 @@ func main() {
 	go runPublishSupplyInfinite(sclient)
 	//	go subscribeDemand(sclient)
 	wg.Wait()
+}
+
+func main() {
+	flag.Parse()
+	go sxutil.HandleSigInt()
+	sxutil.RegisterDeferFunction(sxutil.UnRegisterNode)
+
+	providerInit()
+
 	sxutil.CallDeferFunctions() // cleanup!
 
 }
