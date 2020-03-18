@@ -189,6 +189,7 @@ func runPublishSupplyInfinite(sclient *sxutil.SXServiceClient) {
 }
 
 func main() {
+	log.Printf("FleetProvider(%s) built %s sha1 %s", sxutil.GitVer, sxutil.BuildTime, sxutil.Sha1Ver)
 	flag.Parse()
 	go sxutil.HandleSigInt()
 	sxutil.RegisterDeferFunction(sxutil.UnRegisterNode)
