@@ -17,7 +17,7 @@ TARGET=fleet-provider
 build: $(TARGET)
 
 $(TARGET): $(TARGET).go
-	$(GOBUILD) -ldflags $(LDFALGS)
+	$(GOBUILD) -ldflags $(LDFLAGS)
 
 .PHONY: clean
 clean: 
