@@ -138,7 +138,7 @@ func handleMessage(client *sxutil.SXServiceClient, param interface{}) {
 				newClient := sxutil.GrpcConnectServer(sxServerAddress)
 				if newClient != nil {
 					log.Printf("Reconnect Server %s\n", sxServerAddress)
-					client.Client = newClient
+					client.SXClient = newClient
 				}
 			}
 		} else {
