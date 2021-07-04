@@ -62,7 +62,7 @@ func demandCallback(clt *sxutil.SXServiceClient, dm *pb.Demand) {
 	if dm.GetDemandName() == "" { // this is Select!
 		log.Println("getSelect!")
 
-		clt.Confirm(sxutil.IDType(dm.GetId()))
+		clt.Confirm(sxutil.IDType(dm.GetId()), sxutil.IDType(dm.GetTargetId()))  // dm targetid must be propose id.
 
 	} else { // not select
 		// select any ride share demand!
